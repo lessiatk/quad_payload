@@ -1,4 +1,4 @@
-function figs = make_plots(outdir, P, S, SN, MC, SE, CM, CV, cfg)
+function figs = make_plots(outdir, P, S, SN, MC, SE, CM, CV, cfg, UM)
 %MAKE_PLOTS Графіки результатів (PNG у outdir). Повертає імена файлів.
 C = constraint_list();
 figs = struct('file', {}, 'caption', {});
@@ -118,6 +118,33 @@ try, set(gca, 'XTickLabelRotation', 45); catch, end
 ylabel('% реалізацій'); title('Яке обмеження визначає m_p^* (Monte Carlo)');
 figs(end+1) = save_fig(h, outdir, 'fig8_active.png', ...
     'Частота, з якою кожне обмеження є визначальним.');
+
+% 9. Порівняння методів оцінювання невизначеності
+if nargin >= 10 && ~isempty(UM)
+    h = newfig();
+    rows = {
+      'Інтервал (усі обмеження)', UM.int.lo,     UM.int.hi,     NaN;
+      'Інтервал (без резонансу)', UM.int_nor.lo, UM.int_nor.hi, NaN;
+      'FOSM (P5-P95)',            UM.fosm.q5,    UM.fosm.q95,   UM.fosm.mu;
+      'Квазі-MC Халтон (P5-P95)', UM.qmc.q(1),   UM.qmc.q(3),   UM.qmc.q(2);
+      'Monte Carlo (P5-P95)',     MC.q(1),       MC.q(3),       MC.q(2);
+      'Аналітика T/W (P5-P95)',   UM.ana.q(1),   UM.ana.q(3),   UM.ana.q(2)};
+    K = size(rows, 1);
+    hold on; grid on;
+    for k = 1:K
+        y = K - k + 1;
+        plot([rows{k, 2} rows{k, 3}], [y y], 'b-', 'LineWidth', 8);
+        if isfinite(rows{k, 4}), plot(rows{k, 4}, y, 'wo', 'MarkerFaceColor', 'k', 'MarkerSize', 7); end
+    end
+    yl = [0.3 K + 0.7];
+    plot([cfg.m_target cfg.m_target], yl, 'r-', 'LineWidth', 2);
+    plot([S.m_max S.m_max], yl, 'k--', 'LineWidth', 1.5);
+    set(gca, 'YTick', 1:K, 'YTickLabel', rows(K:-1:1, 1)); ylim(yl);
+    xlabel('m_p^*, кг (гірші умови)');
+    title('Методи оцінювання невизначеності m_p^*');
+    figs(end+1) = save_fig(h, outdir, 'fig9_methods.png', ...
+        'Діапазони m_p^* за різними методами. Червона лінія - ціль ТЗ, пунктир - детермінований розрахунок.');
+end
 end
 
 function h = newfig()

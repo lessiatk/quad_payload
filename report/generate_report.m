@@ -33,7 +33,10 @@ rows = {
   'm_p* у гірших умовах (design point)',          sprintf('%.2f кг', S.m_max),  C(S.active).label;
   'Monte Carlo, P5 / P50 / P95 (гірші умови)',     sprintf('%.2f / %.2f / %.2f кг', MC.q(1), MC.q(2), MC.q(3)), '-';
   sprintf('Ймовірність m_p* >= %g кг', cfg.m_target), sprintf('%.0f %%', 100*MC.P_target), '-';
-  'Рекомендоване значення (P5, гірші умови)',      sprintf('%.1f кг', floor(10*MC.q(1))/10), 'консервативна оцінка'};
+  'Гарантований діапазон, усі обмеження (інтервальний аналіз)', sprintf('%.2f ... %.2f кг', EX.UM.int.lo, EX.UM.int.hi), 'без розподілів, лише [lo, hi]';
+  'Гарантований діапазон без резонансу променя',   sprintf('%.2f ... %.2f кг', EX.UM.int_nor.lo, EX.UM.int_nor.hi), 'за умови, що f_n променя виміряно';
+  'Рекомендоване значення (гарантована нижня межа без резонансу)', sprintf('%.1f кг', floor(10*EX.UM.int_nor.lo)/10), ...
+      sprintf('імовірнісна оцінка P5 (MC) = %.1f кг', MC.q(1))};
 tab(fm, fh, {'Величина', 'Значення', 'Активне обмеження'}, rows);
 
 % ---------- Компоненти, стенд, варіанти ----------
@@ -121,6 +124,65 @@ o = o(1:min(6, numel(o)));
 rows = [MC.names(o)', cellfun(@(v) sprintf('%+.2f', v), num2cell(MC.spearman(o)), 'UniformOutput', false)];
 tab(fm, fh, {'Параметр', 'Кореляція Спірмена з m_p* (MC)'}, rows);
 figure_block(fm, fh, figs, 4); figure_block(fm, fh, figs, 5);
+
+% ---------- Порівняння методів невизначеності ----------
+UM = EX.UM; mt = cfg.m_target;
+h2(fm, fh, '5а. Порівняння методів оцінювання невизначеності (гірші умови)');
+rows = {
+  'Інтервальний аналіз, усі обмеження', sprintf('%.2f', UM.int.lo), sprintf('%.2f', S.m_max), sprintf('%.2f', UM.int.hi), '-', sprintf('%d', UM.int.evals + 1);
+  'Інтервальний аналіз, без резонансу', sprintf('%.2f', UM.int_nor.lo), '-', sprintf('%.2f', UM.int_nor.hi), '-', sprintf('%d', UM.int_nor.evals);
+  'FOSM (нормальне наближення)', sprintf('%.2f', UM.fosm.q5), sprintf('%.2f', UM.fosm.mu), sprintf('%.2f', UM.fosm.q95), sprintf('%.2g %%', 100*UM.fosm.P), sprintf('%d', UM.fosm.evals);
+  sprintf('FORM (beta = %.2f)', UM.form.beta), '-', '-', '-', sprintf('%.2g %%', 100*UM.form.P), sprintf('%d', UM.form.evals);
+  sprintf('Квазі-MC, Халтон (N = %d)', UM.qmc.n_ok), sprintf('%.2f', UM.qmc.q(1)), sprintf('%.2f', UM.qmc.q(2)), sprintf('%.2f', UM.qmc.q(3)), sprintf('%.2g %%', 100*UM.qmc.P), sprintf('%d', UM.qmc.evals);
+  sprintf('Monte Carlo (N = %d)', sum(MC.ok)), sprintf('%.2f', MC.q(1)), sprintf('%.2f', MC.q(2)), sprintf('%.2f', MC.q(3)), sprintf('%.2g %%', 100*MC.P_target), sprintf('%d', MC.N);
+  sprintf('Аналітика T/W (N = %d)', UM.ana.N), sprintf('%.2f', UM.ana.q(1)), sprintf('%.2f', UM.ana.q(2)), sprintf('%.2f', UM.ana.q(3)), sprintf('%.2g %%', 100*UM.ana.P), '5000 (лише precompute)'};
+tab(fm, fh, {'Метод', 'Нижня / P5, кг', 'Центр / P50, кг', 'Верхня / P95, кг', sprintf('P(m_p* >= %g кг)', mt), 'Розрахунків моделі'}, rows);
+par(fm, fh, sprintf(['Інтервальний аналіз: край кожного параметра береться за знаком торнадо (2 розрахунки), потім ' ...
+    'перевіряється %d випадковими вершинами коробки параметрів. Монотонність %s (мінімум серед вершин %.2f кг, максимум %.2f кг). ' ...
+    'Резонансне обмеження немонотонне: при песимістичному E_arm власна частота променя збігається з 2P оборотів висіння, ' ...
+    'і допустимої області немає, тому «гарантована» межа з усіма обмеженнями так низька. Без резонансу (його знімає ' ...
+    'вимірювання f_n модальним тестом) межа монотонна: %s. FM в кутах коробки: найгірший %.2f, найкращий %.2f (> %.2f - фізично сумнівно).'], ...
+    60, yn(UM.int.monotone), UM.int.v_min, UM.int.v_max, yn(UM.int_nor.monotone), ...
+    UM.int.FM_w, UM.int.FM_b, S.X.FM_max));
+[~, o] = sort(abs(SE.hi - SE.lo), 'descend'); o = o(1:min(8, numel(o)));
+rows = cell(numel(o), 4);
+for k = 1:numel(o)
+    j = o(k); p = P.(UM.names{j});
+    rows(k, :) = {UM.names{j}, sprintf('%g', UM.int_nor.xw(j)), sprintf('%g', UM.int_nor.xb(j)), sprintf('%g', p.nom)};
+end
+tab(fm, fh, {'Параметр', 'Поганий край', 'Добрий край', 'Номінал'}, rows);
+[~, o] = sort(UM.fosm.share, 'descend'); o = o(1:min(6, numel(o)));
+rows = cell(numel(o), 4);
+for k = 1:numel(o)
+    j = o(k);
+    rows(k, :) = {UM.names{j}, sprintf('%+.3g кг/од.', UM.fosm.grad(j)), sprintf('%.1f %%', 100*UM.fosm.share(j)), P.(UM.names{j}).src};
+end
+tab(fm, fh, {'Параметр (FOSM)', 'dm*/dx', 'Частка дисперсії', 'Джерело'}, rows);
+par(fm, fh, sprintf(['FOSM: середнє %.2f кг, sigma = %.2f кг. Розкладання в ряд Тейлора не бачить зламів min() і резонансу, ' ...
+    'тому нижній хвіст (P5) менш песимістичний, ніж у MC/QMC.'], UM.fosm.mu, UM.fosm.sigma));
+R = UM.form; na = numel(R.act);
+rows = cell(na, 4);
+for k = 1:na
+    j = R.act(k);
+    rows(k, :) = {UM.names{j}, sprintf('%g', R.x(k)), sprintf('%g', R.x0(k)), sprintf('%+.2f', R.u(k))};
+end
+tab(fm, fh, {'Параметр (FORM)', 'Значення в найімовірнішій точці', 'Медіана', 'Зсув, sigma'}, rows);
+if R.reachable
+    ps = sprintf('Найімовірніша комбінація параметрів, при якій m_p* = %g кг, віддалена від медіани на beta = %.2f sigma; FM у цій точці %.2f.', mt, R.beta, R.FM);
+else
+    ps = sprintf('Ціль %g кг недосяжна навіть на краях діапазонів параметрів: імовірність практично нульова.', mt);
+end
+par(fm, fh, ps);
+rows = cell(numel(UM.qmc.ns), 3);
+for k = 1:numel(UM.qmc.ns)
+    rows(k, :) = {sprintf('%d', UM.qmc.ns(k)), sprintf('%.2f', UM.qmc.p5_qmc(k)), sprintf('%.2f', UM.qmc.p5_mc(k))};
+end
+tab(fm, fh, {'Число точок', 'P5, Халтон', 'P5, звичайний MC'}, rows);
+par(fm, fh, sprintf(['Збіжність P5 (еталон - MC на %d точках: %.2f кг). Аналітичне домінуюче обмеження: ' ...
+    'm_p* = 4 T_max / (k_TW g r) - m_порожня, r = %.3f (перерозподіл тяги через зміщення ЦМ). За детермінованого вихідного ' ...
+    'набору дає %.2f кг проти %.2f кг повної моделі; запас тяги визначає %.0f %% реалізацій MC, решта - інші обмеження ' ...
+    '(резонанс), які аналітична формула не бачить.'], sum(MC.ok), UM.qmc.p5_ref, UM.ana.r, UM.ana.m_det, S.m_max, 100*UM.ana.tw_share));
+figure_block(fm, fh, figs, 9);
 
 % ---------- Верифікація ----------
 h2(fm, fh, '6. Верифікація');
@@ -224,6 +286,9 @@ s = strrep(s, '&', '&amp;'); s = strrep(s, '<', '&lt;'); s = strrep(s, '>', '&gt
 end
 function s = yesno(b)
 if b, s = 'так'; else, s = 'ні'; end
+end
+function s = yn(b)
+if b, s = 'виконується'; else, s = 'порушена'; end
 end
 function s = limstr(v)
 if isinf(v) && v > 0

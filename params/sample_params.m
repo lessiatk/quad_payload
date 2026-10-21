@@ -17,12 +17,3 @@ for k = 1:numel(f)
     end
 end
 end
-
-function x = tri_inv(u, a, m, b)
-% Обернена функція розподілу трикутного закону.
-c = (m - a) / (b - a);
-x = zeros(size(u));
-lo = u < c;
-x(lo)  = a + sqrt(u(lo) * (b - a) * (m - a));
-x(~lo) = b - sqrt((1 - u(~lo)) * (b - a) * (b - m));
-end

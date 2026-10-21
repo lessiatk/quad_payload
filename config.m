@@ -6,6 +6,7 @@ cfg.tol      = 1e-4;    % кг, точність бісекції
 cfg.dm_mc    = 1.0;     % кг, крок сітки в Monte Carlo
 cfg.tol_mc   = 1e-2;    % кг, точність бісекції в Monte Carlo
 cfg.N_mc     = 500;     % реалізацій Monte Carlo (для фінального звіту >= 2000)
+cfg.N_qmc    = 256;     % точок Халтона (квазі-MC)
 cfg.seed     = 42;
 cfg.preset   = 'light'; % 'light' - U8 Lite KV150, 'heavy' - MN605-S KV170 + посилені промені, 'ref' - узагальнена конфігурація
 cfg.m_target = 8;       % кг, значення для перевірки гіпотези "8 кг"

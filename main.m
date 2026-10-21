@@ -53,6 +53,11 @@ fprintf('6/8 Monte Carlo (N = %d)\n', cfg.N_mc);
 MC = monte_carlo(P, cfg);
 fprintf('    P5/P50/P95 = %.2f / %.2f / %.2f кг\n', MC.q);
 
+fprintf('6б Інтервальний аналіз, FOSM, FORM, квазі-MC, аналітика\n');
+UM = uncertainty_methods(P, S, MC, SE, cfg);
+fprintf('    інтервал: [%.2f ... %.2f] кг (без резонансу [%.2f ... %.2f]); FOSM %.2f +- %.2f; FORM P(>= %g кг) = %.2g\n', ...
+    UM.int.lo, UM.int.hi, UM.int_nor.lo, UM.int_nor.hi, UM.fosm.mu, UM.fosm.sigma, cfg.m_target, UM.form.P);
+
 fprintf('7/8 Оцінювання достовірності\n');
 CR = credibility_check(P, Xd, S, SN, MC, SE, CM, CV, U, cfg);
 fprintf('    критичних: %d, попереджень: %d, достовірний: %d\n', CR.n_crit, CR.n_warn, CR.credible);
@@ -61,11 +66,12 @@ fprintf('8/8 Варіанти компонування, стендова пер�
 EX.bom = components(cfg.preset);
 EX.bench = bench_check(P, cfg.preset);
 EX.var = variant_study(P, cfg);
+EX.UM = UM;
 for k = 1:numel(EX.var)
     fprintf('    %s: m_p* = %.2f кг (%s)\n', EX.var(k).name, EX.var(k).m_max, EX.var(k).active);
 end
 try
-    figs = make_plots(outdir, P, S, SN, MC, SE, CM, CV, cfg);
+    figs = make_plots(outdir, P, S, SN, MC, SE, CM, CV, cfg, UM);
 catch err    % без графічного середовища (headless) звіт будується без рисунків
     warning('Графіки не побудовано: %s', err.message);
     figs = struct('file', {}, 'caption', {});
