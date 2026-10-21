@@ -1,4 +1,4 @@
-function generate_report(outdir, P, S, SN, MC, SE, CM, CV, U, CR, figs, cfg)
+function generate_report(outdir, P, S, SN, MC, SE, CM, CV, U, CR, figs, cfg, EX)
 %GENERATE_REPORT Автоматичний технічний звіт (report.md + report.html, UTF-8).
 fm = fopen(fullfile(outdir, 'report.md'),   'w', 'n', 'UTF-8');
 fh = fopen(fullfile(outdir, 'report.html'), 'w', 'n', 'UTF-8');
@@ -35,6 +35,30 @@ rows = {
   sprintf('Ймовірність m_p* >= %g кг', cfg.m_target), sprintf('%.0f %%', 100*MC.P_target), '-';
   'Рекомендоване значення (P5, гірші умови)',      sprintf('%.1f кг', floor(10*MC.q(1))/10), 'консервативна оцінка'};
 tab(fm, fh, {'Величина', 'Значення', 'Активне обмеження'}, rows);
+
+% ---------- Компоненти, стенд, варіанти ----------
+h2(fm, fh, '1а. Склад апарата (вхідні компоненти і заводські дані)');
+tab(fm, fh, {'Роль', 'Виріб', 'Дані виробника', 'Джерело'}, EX.bom);
+rows = cell(size(EX.bench.rows, 1), 5);
+for k = 1:size(rows, 1)
+    r = EX.bench.rows(k, :);
+    rows(k, :) = {sprintf('%.0f', r(1)), sprintf('%.0f / %.0f', r(2), r(4)), sprintf('%+.1f %%', r(6)), ...
+                  sprintf('%.0f / %.0f', r(3), r(5)), sprintf('%+.1f %%', r(7))};
+end
+tab(fm, fh, {'Тяга стенду, г', 'Оберти: стенд / модель', 'Похибка обертів', 'Потужність, Вт: стенд / модель', 'Похибка потужності'}, rows);
+par(fm, fh, sprintf(['Перевірка моделі на заводській стендовій таблиці (12S, 1 мотор). Повний газ: стенд %.0f г / %.0f об/хв / %.1f А, ' ...
+    'модель %.0f г / %.0f об/хв / %.1f А (калібрування R_esc). C_T, C_P виведено з цієї ж таблиці, ρ стенду припущено 1.2 кг/м^3.'], ...
+    EX.bench.bench_full(1), EX.bench.bench_full(2), EX.bench.bench_full(3), EX.bench.full(1), EX.bench.full(2), EX.bench.full(3)));
+h2(fm, fh, '1б. Варіанти компонування (гірші умови)');
+rows = cell(numel(EX.var), 5);
+for k = 1:numel(EX.var)
+    rows(k, :) = {EX.var(k).name, sprintf('%.2f', EX.var(k).m_max), EX.var(k).active, ...
+                  sprintf('%.3f', EX.var(k).Izz), sprintf('%.1f', EX.var(k).t_min)};
+end
+tab(fm, fh, {'Варіант', 'm_p*, кг', 'Активне обмеження', 'Izz, кг*м^2', 'Політ при m_p*, хв'}, rows);
+par(fm, fh, ['Висота вантажу і батареї майже не впливає на статичне висіння: у моделі вона змінює лише інерцію (рискання) ' ...
+    'і ЦМ по вертикалі. Головний чинник - зміщення вантажу від осі (перерозподіл тяги). Маятниковість, аеродинаміка ' ...
+    'обтікання вантажу і стійкість при нахилі в модель не входять.']);
 
 % ---------- Постановка ----------
 h2(fm, fh, '2. Математична постановка');

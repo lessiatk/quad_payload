@@ -12,7 +12,7 @@ function FT = motor_full_throttle(X)
 
 Ke   = 1 / (X.Kv * 2*pi/60);
 Voc  = X.n_cells * X.V_cell_load;
-Rtot = X.Rm + X.n_rot * X.R_pack / X.eta_esc;
+Rtot = X.Rm + X.R_esc + X.n_rot * X.R_pack / X.eta_esc;
 D    = X.D_prop;
 
 f = @(w) Ke*((Voc - Ke*w)/Rtot - X.I0) - X.CP*X.rho*(w/(2*pi))^2*D^5/(2*pi);

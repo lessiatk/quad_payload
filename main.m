@@ -20,7 +20,7 @@ end
 t0 = tic;
 
 fprintf('1/8 Вихідні дані\n');
-P  = ref_params();
+if strcmp(cfg.preset, 'real'), P = real_params(); else, P = ref_params(); end
 Xd = get_point(P, 'design');     % гірші експлуатаційні умови
 Xn = get_point(P, 'nominal');    % нормальні умови
 
@@ -50,9 +50,15 @@ fprintf('7/8 Оцінювання достовірності\n');
 CR = credibility_check(P, Xd, S, SN, MC, SE, CM, CV, U, cfg);
 fprintf('    критичних: %d, попереджень: %d, достовірний: %d\n', CR.n_crit, CR.n_warn, CR.credible);
 
-fprintf('8/8 Графіки і звіт\n');
+fprintf('8/8 Варіанти компонування, стендова перевірка, графіки і звіт\n');
+EX.bom = components();
+EX.bench = bench_check(P);
+EX.var = variant_study(P, cfg);
+for k = 1:numel(EX.var)
+    fprintf('    %s: m_p* = %.2f кг (%s)\n', EX.var(k).name, EX.var(k).m_max, EX.var(k).active);
+end
 figs = make_plots(outdir, P, S, SN, MC, SE, CM, CV, cfg);
-generate_report(outdir, P, S, SN, MC, SE, CM, CV, U, CR, figs, cfg);
-save(fullfile(outdir, 'results.mat'), 'P', 'S', 'SN', 'MC', 'SE', 'CM', 'CV', 'U', 'CR', 'cfg', '-v7');
+generate_report(outdir, P, S, SN, MC, SE, CM, CV, U, CR, figs, cfg, EX);
+save(fullfile(outdir, 'results.mat'), 'P', 'S', 'SN', 'MC', 'SE', 'CM', 'CV', 'U', 'CR', 'cfg', 'EX', '-v7');
 
 fprintf('Готово за %.0f с. Звіт: %s\n', toc(t0), fullfile(outdir, 'report.html'));
