@@ -12,7 +12,7 @@ else                          % U8 Lite KV150 + P22x6.6, 48 В
     V = 48; I_full = 26.5;
 end
 X = get_point(P, 'nominal');
-X.rho = 1.2; X.n_cells = 12; X.V_cell_load = V/12; X.R_pack = 0; X.n_rot = 1;
+X.rho = 1.2; X.n_cells = 12; X.V_cell_oc = V/12; X.R_pack = 0; X.n_rot = 1;
 BC.rows = zeros(size(tab, 1), 7);
 for k = 1:size(tab, 1)
     op = rotor_operating_point(X, tab(k, 1)*1e-3*9.80665);

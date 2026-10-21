@@ -17,7 +17,7 @@ for i = 1:4
     P_e = P_e + op.P_elec;
     n_mean = n_mean + op.n/4;
 end
-V_bus  = X.n_cells * X.V_cell_load;
+V_bus  = X.n_cells * X.V_cell_oc;
 P_bat  = P_e / X.eta_esc + X.P_avionics;
 I_bat  = P_bat / V_bus;
 t_fl   = B.E_use / P_bat;                         % с

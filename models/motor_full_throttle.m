@@ -7,11 +7,12 @@ function FT = motor_full_throttle(X)
 %            від струму всіх N моторів через спільний опір батареї)
 %     Q_prop(w) = C_P*rho*n^2*D^5/(2*pi),  n = w/(2*pi)
 %   Kt = Ke = 1/Kv [В*с/рад].
-%   Розрахунок для напруги V_cell_load (кінець місії) - консервативно.
+%   V_cell_oc - напруга без навантаження в кінці місії; просідання враховано лише
+%   через R_pack (і R_esc), щоб не рахувати його двічі.
 %   Нагрів обмотки на повному газі не враховано (короткочасний режим).
 
 Ke   = 1 / (X.Kv * 2*pi/60);
-Voc  = X.n_cells * X.V_cell_load;
+Voc  = X.n_cells * X.V_cell_oc;
 Rtot = X.Rm + X.R_esc + X.n_rot * X.R_pack / X.eta_esc;
 D    = X.D_prop;
 

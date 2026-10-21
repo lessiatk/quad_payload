@@ -61,8 +61,8 @@ docs/MODEL.md             — математична документація, �
 Запуск: `main` (пресет із `config.m`), `main('heavy')` або `run_all` (обидві + `results/summary.md`). Результати лежать у `results/<пресет>/`.
 
 `cfg.preset` у `config.m`:
-- `'light'` (за замовчуванням) — реальні компоненти: мотор T-Motor U8 Lite KV150, пропелер P22×6.6, ESC Alpha 60A 12S, батарея Tattu Plus 12S 16000 мА·год, рама Tarot X4 (`params/real_params.m`). m_p* ≈ 1.9 кг (гірші умови) / 3.3 кг (нормальні).
-- `'heavy'` — мотор T-Motor V605 KV210, пропелер V22×7.4, ESC FLAME 80A, посилені промені Ш35×2 (`params/real_params_heavy.m`). m_p* ≈ 6.8 кг (гірші) / 9.2 кг (нормальні).
+- `'light'` (за замовчуванням) — реальні компоненти: мотор T-Motor U8 Lite KV150, пропелер P22×6.6, ESC Alpha 60A 12S, батарея Tattu Plus 12S 16000 мА·год, рама Tarot X4 (`params/real_params.m`).
+- `'heavy'` — мотор T-Motor V605 KV210, пропелер V22×7.4, ESC FLAME 80A, посилені промені Ш35×2 (`params/real_params_heavy.m`).
 - `'ref'` — узагальнена референсна конфігурація (таблиця нижче).
 
 Перелік компонентів і джерела — `params/components.m` (розділ 1а звіту).
