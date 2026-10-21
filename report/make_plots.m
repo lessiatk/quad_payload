@@ -122,6 +122,8 @@ end
 
 function h = newfig()
 h = figure('Visible', 'off', 'Position', [100 100 1100 520]);
+% Octave при print ігнорує Position невидимого вікна - розмір задаємо через Paper*
+set(h, 'PaperUnits', 'inches', 'PaperSize', [10 4.73], 'PaperPosition', [0 0 10 4.73]);
 end
 
 function f = save_fig(h, outdir, name, caption)
